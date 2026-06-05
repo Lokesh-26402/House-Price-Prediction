@@ -34,3 +34,15 @@ This project focuses on predicting house prices using Machine Learning regressio
 - R² Score
 # Best Model
 Gradient Boosting Regressor
+# How to Run
+- Install dependencies
+- Run the notebook
+- Train the model
+- Save the trained model
+- Perform predictions
+# Output
+- Accurate House Price Predictions
+- Model Comparison Results
+- Performance Evaluation Reports
+- Saved Machine Learning Model
+<img width="1000" height="600" alt="rf_feature_importance_top15" src="https://github.com/user-attachments/assets/97ed0759-7448-47d1-bd5f-72e0988cc39a" />
