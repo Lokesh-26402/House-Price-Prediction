@@ -3,8 +3,8 @@ This project focuses on predicting house prices using Machine Learning regressio
 # 🎯 Objectives
 - Perform Exploratory Data Analysis (EDA)
 - Handle missing values and outliers
-Apply feature engineering techniques
-Encode categorical variables and scale numerical features
-Train and compare multiple regression models
-Evaluate models using RMSE and MAE
-Save the trained model for future predictions
+- Apply feature engineering techniques
+- Encode categorical variables and scale numerical features
+- Train and compare multiple regression models
+- Evaluate models using RMSE and MAE
+- Save the trained model for future predictions
