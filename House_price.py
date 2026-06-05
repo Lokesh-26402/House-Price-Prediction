@@ -1,0 +1,253 @@
+import pandas as pd
+import numpy as np
+import inspect
+# Workaround: Python 3.14 + older matplotlib can call inspect.cleandoc on None.
+# Provide a safe wrapper so imports don't fail. Prefer using a Python version
+# supported by your matplotlib (3.11/3.12) for a permanent fix.
+_old_cleandoc = inspect.cleandoc
+def _safe_cleandoc(doc):
+    if doc is None:
+        return ""
+    return _old_cleandoc(doc)
+inspect.cleandoc = _safe_cleandoc
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+import joblib
+from pathlib import Path
+
+base_dir = Path(__file__).resolve().parent
+possible_paths = [
+    base_dir / "house_price.csv",
+    base_dir / "House_Price_Data.xlsx",
+    base_dir / "House Prediction data set.csv",
+    base_dir / "House Prediction data set.xlsx",
+    base_dir / "house prediction data set.csv",
+    base_dir / "house prediction data set.xlsx",
+]
+possible_paths += list(base_dir.glob("*house*price*.csv"))
+possible_paths += list(base_dir.glob("*house*price*.xlsx"))
+possible_paths += list(base_dir.glob("*house*prediction*dataset*.csv"))
+possible_paths += list(base_dir.glob("*house*prediction*dataset*.xlsx"))
+possible_paths += list((Path.home() / "Downloads").glob("*house*price*.*"))
+possible_paths += list((Path.home() / "Downloads").glob("*house*prediction*.*"))
+
+csv_path = None
+for path in possible_paths:
+    if path.exists():
+        csv_path = path
+        break
+
+if csv_path is None:
+    raise FileNotFoundError(
+        "No dataset found. Put `house_price.csv` in this project folder or rename the dataset file to a supported name."
+    )
+
+if csv_path.suffix.lower() == ".csv":
+    df = pd.read_csv(csv_path)
+elif csv_path.suffix.lower() in {".xls", ".xlsx"}:
+    df = pd.read_excel(csv_path)
+else:
+    raise ValueError(f"Unsupported dataset file type: {csv_path}")
+
+print(df.head())
+
+print(df.info())
+
+print(df.describe())
+
+print(df.isnull().sum())
+num_cols = df.select_dtypes(include=np.number).columns
+for col in num_cols:
+    df.loc[:, col] = df[col].fillna(df[col].median())
+
+cat_cols = df.select_dtypes(include=["object", "string"]).columns
+for col in cat_cols:
+    if not df[col].mode().empty:
+        df.loc[:, col] = df[col].fillna(df[col].mode()[0])
+
+le = LabelEncoder()
+for col in cat_cols:
+    df[col] = le.fit_transform(df[col].astype(str))
+
+# Create outputs directory for saved figures, metrics, and models
+outputs_dir = base_dir / "outputs"
+outputs_dir.mkdir(exist_ok=True)
+
+plt.figure(figsize=(12, 8))
+sns.heatmap(df.corr(), cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.tight_layout()
+plt.savefig(outputs_dir / 'correlation_heatmap.png')
+plt.close()
+
+if 'price' not in df.columns:
+    raise KeyError(f"Expected target column 'price' not found. Available columns: {df.columns.tolist()}")
+
+df['log_price'] = np.log1p(df['price'])
+X = df.drop(['price', 'log_price'], axis=1)
+y = df['log_price']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+
+X_test = scaler.transform(X_test)
+lr = LinearRegression()
+
+lr.fit(X_train, y_train)
+
+lr_pred = lr.predict(X_test)
+rf = RandomForestRegressor()
+
+rf.fit(X_train, y_train)
+
+rf_pred = rf.predict(X_test)
+
+gb = GradientBoostingRegressor()
+
+gb.fit(X_train, y_train)
+
+gb_pred = gb.predict(X_test)
+
+def evaluate_model(name, y_test, pred):
+    
+    mae = mean_absolute_error(y_test, pred)
+
+    rmse = np.sqrt(mean_squared_error(y_test, pred))
+
+    r2 = r2_score(y_test, pred)
+
+    print(f"{name} Results")
+    print("-"*30)
+
+    print("MAE :", mae)
+    print("RMSE:", rmse)
+    print("R2 Score:", r2)
+
+    print()
+
+evaluate_model("Linear Regression", y_test, lr_pred)
+
+evaluate_model("Random Forest", y_test, rf_pred)
+
+evaluate_model("Gradient Boosting", y_test, gb_pred)
+
+residuals = y_test - gb_pred
+
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=gb_pred, y=residuals)
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel("Predicted Values")
+plt.ylabel("Residuals")
+plt.title("Residual Analysis")
+plt.tight_layout()
+plt.savefig(outputs_dir / 'residual_analysis.png')
+plt.close()
+
+# Predicted vs Actual for Gradient Boosting
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, gb_pred, alpha=0.5, s=50)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Perfect Prediction')
+plt.xlabel("Actual Log-Price")
+plt.ylabel("Predicted Log-Price")
+plt.title("Predicted vs Actual (Gradient Boosting)")
+plt.legend()
+plt.tight_layout()
+plt.savefig(outputs_dir / 'predicted_vs_actual_gb.png')
+plt.close()
+
+# Feature importance for Random Forest
+rf_importances = rf.feature_importances_
+feature_names = X.columns
+indices = np.argsort(rf_importances)[-15:]  # Top 15 features
+
+plt.figure(figsize=(10, 6))
+plt.barh(range(len(indices)), rf_importances[indices])
+plt.yticks(range(len(indices)), [feature_names[i] for i in indices])
+plt.xlabel("Feature Importance")
+plt.title("Top 15 Features - Random Forest")
+plt.tight_layout()
+plt.savefig(outputs_dir / 'rf_feature_importance_top15.png')
+plt.close()
+
+# Distribution of predicted prices
+plt.figure(figsize=(10, 6))
+plt.hist(y_test, bins=30, alpha=0.5, label='Actual', edgecolor='black')
+plt.hist(gb_pred, bins=30, alpha=0.5, label='Predicted (GB)', edgecolor='black')
+plt.xlabel("Log-Price")
+plt.ylabel("Frequency")
+plt.title("Distribution: Actual vs Predicted Prices (Gradient Boosting)")
+plt.legend()
+plt.tight_layout()
+plt.savefig(outputs_dir / 'distribution_actual_vs_predicted.png')
+plt.close()
+
+# Model comparison
+models = ['Linear Regression', 'Random Forest', 'Gradient Boosting']
+r2_scores = [
+    r2_score(y_test, lr_pred),
+    r2_score(y_test, rf_pred),
+    r2_score(y_test, gb_pred)
+]
+mae_scores = [
+    mean_absolute_error(y_test, lr_pred),
+    mean_absolute_error(y_test, rf_pred),
+    mean_absolute_error(y_test, gb_pred)
+]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+ax1.bar(models, r2_scores, color=['blue', 'green', 'red'])
+ax1.set_ylabel("R² Score")
+ax1.set_title("R² Score Comparison")
+ax1.axhline(y=0, color='k', linestyle='--', alpha=0.3)
+
+ax2.bar(models, mae_scores, color=['blue', 'green', 'red'])
+ax2.set_ylabel("MAE")
+ax2.set_title("MAE Comparison")
+
+plt.tight_layout()
+plt.savefig(outputs_dir / 'model_comparison_scores.png')
+plt.close()
+
+# Save trained models
+joblib.dump(lr, str(outputs_dir / 'linear_regression.pkl'))
+joblib.dump(rf, str(outputs_dir / 'random_forest.pkl'))
+joblib.dump(gb, str(outputs_dir / 'gradient_boosting.pkl'))
+
+# Save evaluation metrics
+metrics_list = []
+for name, pred in [('Linear Regression', lr_pred), ('Random Forest', rf_pred), ('Gradient Boosting', gb_pred)]:
+    mae = mean_absolute_error(y_test, pred)
+    rmse = np.sqrt(mean_squared_error(y_test, pred))
+    r2 = r2_score(y_test, pred)
+    metrics_list.append({'model': name, 'mae': mae, 'rmse': rmse, 'r2': r2})
+
+metrics_df = pd.DataFrame(metrics_list)
+metrics_df.to_csv(outputs_dir / 'metrics.csv', index=False)
+metrics_df.to_json(outputs_dir / 'metrics.json', orient='records', indent=2)
+
+model_path = base_dir / 'house_price_model.pkl'
+if model_path.exists():
+    model = joblib.load(model_path)
+    sample = X.iloc[0:1]
+    prediction = model.predict(sample)
+    prediction = np.expm1(prediction)
+    print("Predicted House Price:", prediction[0])
+else:
+    print(f"Skipped model prediction because '{model_path.name}' was not found.")
