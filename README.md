@@ -20,3 +20,17 @@ This project focuses on predicting house prices using Machine Learning regressio
 - Linear Regression
 - Random Forest Regressor
 - Gradient Boosting Regressor
+# Features
+- Data Cleaning
+- Missing Value Handling
+- Feature Encoding
+- Feature Scaling
+- Log Transformation
+- Feature Engineering
+# Evaluation Metrics
+- RMSE (Root Mean Squared Error)
+- MAE (Mean Absolute Error)
+- Residual Analysis
+- R² Score
+# Best Model
+Gradient Boosting Regressor
