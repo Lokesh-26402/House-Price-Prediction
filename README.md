@@ -8,3 +8,11 @@ This project focuses on predicting house prices using Machine Learning regressio
 - Train and compare multiple regression models
 - Evaluate models using RMSE and MAE
 - Save the trained model for future predictions
+# 🛠️ Technologies Used
+- Python
+- Pandas
+- NumPy
+- Matplotlib
+- Seaborn
+- Scikit-learn
+- Joblib
