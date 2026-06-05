@@ -16,3 +16,7 @@ This project focuses on predicting house prices using Machine Learning regressio
 - Seaborn
 - Scikit-learn
 - Joblib
+# Algorithms Used
+- Linear Regression
+- Random Forest Regressor
+- Gradient Boosting Regressor
