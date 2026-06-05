@@ -45,6 +45,9 @@ Gradient Boosting Regressor
 - Model Comparison Results
 - Performance Evaluation Reports
 - Saved Machine Learning Model
+<img width="800" height="600" alt="residual_analysis" src="https://github.com/user-attachments/assets/ed40c573-5cbe-43d3-ad72-5aeca1029cb3" />
+<img width="1406" height="673" alt="Screenshot 2026-06-05 194324" src="https://github.com/user-attachments/assets/dada8799-3933-4971-aa7b-ba9d3a3352c3" />
+<img width="676" height="455" alt="Screenshot 2026-06-05 193922" src="https://github.com/user-attachments/assets/0bfb6ffa-95f9-4308-a8ad-ecfccff5890f" />
 <img width="1200" height="800" alt="correlation_heatmap" src="https://github.com/user-attachments/assets/77121370-bdba-4d94-a2ee-1dd386c366a9" />
 <img width="1000" height="600" alt="distribution_actual_vs_predicted" src="https://github.com/user-attachments/assets/e27d92af-aa31-47fd-a877-3c75c80f771b" />
 <img width="1200" height="500" alt="model_comparison_scores" src="https://github.com/user-attachments/assets/34937cbe-4c11-4db3-a068-0300fad856ca" />
